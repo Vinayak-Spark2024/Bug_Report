@@ -2,61 +2,76 @@
 
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from rest_framework.permissions import BasePermission
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from django.contrib.auth.models import User
-from accounts.models import CustomUser, Department, Role
-from accounts.serializers import (CustomUserSerializer, RegisterSerializer,
+from django.contrib.auth import authenticate
+
+from accounts.models import  Department, Role, CustomUser
+from accounts.serializers import (RegisterSerializer,
                                    DepartmentSerializer, RoleSerializer)
+
+
+
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_staff
+
+class IsSelfOrAdmin(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj or request.user.is_staff
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
 class DepartmentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
 class RoleListCreateView(generics.ListCreateAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [IsAdminUser]
-
+    permission_classes = [IsAdmin]
 
 class RoleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
 class CustomUserListView(generics.ListAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-    permission_classes = [IsAdminUser]
+    serializer_class = RegisterSerializer
+    permission_classes = [IsAdmin]
 
 class CustomUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-    permission_classes = [IsAdminUser]
+    serializer_class = RegisterSerializer
+    permission_classes = [IsAdmin]
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RegisterSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return CustomUser.objects.filter(pk=self.request.user.pk)
+
     def get_object(self):
-        # Override to return the profile of the currently authenticated user
-        return self.request.user
+        return self.get_queryset().get(pk=self.request.user.pk)
 
 class LoginView(generics.GenericAPIView):
-    serializer_class = CustomUserSerializer
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -86,3 +101,4 @@ class LogoutView(generics.GenericAPIView):
             return Response({"msg": "Logout Successful"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"detail": "An unexpected error occurred, " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
