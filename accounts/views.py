@@ -61,7 +61,7 @@ class CustomUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin]
 
 
-class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [IsAuthenticated]
 

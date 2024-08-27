@@ -2,8 +2,10 @@
 
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .models import Project
-from .serializers import ProjectSerializer
+from rest_framework.exceptions import PermissionDenied
+
+from projects.models import Project
+from projects.serializers import ProjectSerializer
 
 class ProjectCreateView(generics.CreateAPIView):
     queryset = Project.objects.all()
@@ -19,7 +21,7 @@ class ProjectCreateView(generics.CreateAPIView):
 
 class ProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    permission_classes = [IsAdminUser]  # Ensure the user is authenticated
 
     def get_queryset(self):
         # If the user is a staff member, return all projects
@@ -27,8 +29,15 @@ class ProjectListView(generics.ListAPIView):
             return Project.objects.all()
         # Otherwise, return only the projects the user is associated with
         return Project.objects.filter(users=self.request.user)
+    
+class ProjectUserView(generics.ListAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
-class ProjectUpdateView(generics.UpdateAPIView):
+    def get_queryset(self):
+        return Project.objects.filter(users=self.request.user)
+
+class ProjectUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -36,3 +45,4 @@ class ProjectUpdateView(generics.UpdateAPIView):
     def get_queryset(self):
         # Ensure users can only update projects they are a part of
         return Project.objects.filter(users=self.request.user)
+    

@@ -1,7 +1,7 @@
 # accounts/serializers.py
 
 from rest_framework import serializers
-from .models import Project
+from projects.models import Project
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
