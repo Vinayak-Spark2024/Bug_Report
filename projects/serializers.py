@@ -1,5 +1,3 @@
-# accounts/serializers.py
-
 from rest_framework import serializers
 from projects.models import Project
 
@@ -7,11 +5,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'project_name', 'project_duration', 'status', 'users']
-        read_only_fields = ['id', 'status']
+        # Removed 'status' from read_only_fields to allow updates
 
     def validate_project_name(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("Project name must be at least 3 characters long.")
+
+        if Project.objects.filter(project_name=value).exists():
+            raise serializers.ValidationError("A project with this name already exists.")
         return value
 
     def validate_project_duration(self, value):
@@ -20,8 +21,9 @@ class ProjectSerializer(serializers.ModelSerializer):
         return value
 
     def validate_status(self, value):
-        if value not in dict(Project.STATUS_CHOICES):
-            raise serializers.ValidationError("Invalid status value.")
+        valid_statuses = ['open', 'closed']
+        if value not in valid_statuses:
+            raise serializers.ValidationError(f"Invalid status value. Valid statuses are: {', '.join(valid_statuses)}.")
         return value
 
     def validate(self, data):
