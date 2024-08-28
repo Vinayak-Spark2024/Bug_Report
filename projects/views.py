@@ -21,7 +21,7 @@ class ProjectCreateView(generics.CreateAPIView):
 
 class ProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
-    permission_classes = [IsAdminUser]  # Ensure the user is authenticated
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
     def get_queryset(self):
         # If the user is a staff member, return all projects
@@ -40,9 +40,6 @@ class ProjectUserView(generics.ListAPIView):
 class ProjectUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
-    def get_queryset(self):
-        # Ensure users can only update projects they are a part of
-        return Project.objects.filter(users=self.request.user)
     
