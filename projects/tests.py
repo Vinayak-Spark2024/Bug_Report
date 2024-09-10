@@ -116,14 +116,12 @@ class ProjectTests(APITestCase):
         project_names = [project['project_name'] for project in response.data]
         self.assertIn('Project_1', project_names)  # Ensure this matches your setup
 
-    
     def test_retrieve_project(self):
         url = reverse('project-update', args=[self.projects[0].id])
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.admin_user))
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['project_name'], self.projects[0].project_name)
-
 
     def test_update_project_as_non_admin(self):
         url = reverse('project-update', args=[self.projects[0].id])
@@ -132,14 +130,12 @@ class ProjectTests(APITestCase):
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-
     def test_user_project_view(self):
         url = reverse('project-user-view')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.users[0]))
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 4)
-
 
     def test_user_cannot_see_other_user_projects(self):
         url = reverse('project-user-view')
@@ -148,11 +144,9 @@ class ProjectTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 4)
 
-
     def test_update_project_as_admin(self):
         url = reverse('project-update', args=[self.projects[0].id])
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.admin_user))
-
         data = {'status': 'closed'}
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.data['status'], 'closed')
@@ -165,7 +159,6 @@ class ProjectTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertFalse(Project.objects.filter(id=self.projects[0].id).exists())
 
-
     def test_delete_project_as_admin(self):
         url = reverse('project-update', args=[self.projects[0].id])
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.admin_user))
@@ -176,7 +169,6 @@ class ProjectTests(APITestCase):
         
         # Check that the project still exists
         self.assertTrue(Project.objects.filter(id=self.projects[0].id).exists())
-
 
     def test_non_admin_user_cannot_update_project(self):
         url = reverse('project-update', args=[self.projects[0].id])
@@ -191,7 +183,6 @@ class ProjectTests(APITestCase):
         self.projects[0].refresh_from_db()
         self.assertEqual(self.projects[0].status, 'open')
 
-
     def test_admin_can_update_project_name(self):
         url = reverse('project-update', args=[self.projects[0].id])
         data = {"project_name": "Updated Project Name"}
@@ -200,14 +191,12 @@ class ProjectTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['project_name'], 'Updated Project Name')
 
-
     def test_non_admin_cannot_update_project_name(self):
         url = reverse('project-update', args=[self.projects[0].id])
         data = {"project_name": "Unauthorized Project Name"}
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.users[0]))
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
 
     def test_admin_can_add_users_to_project(self):
         url = reverse('project-update', args=[self.projects[0].id])
@@ -221,7 +210,6 @@ class ProjectTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(new_user.id, response.data['users'])
 
-
     def test_non_admin_cannot_add_users_to_project(self):
         url = reverse('project-update', args=[self.projects[0].id])
         new_user = CustomUser.objects.create_user(
@@ -233,13 +221,11 @@ class ProjectTests(APITestCase):
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-
     def test_retrieve_non_existent_project(self):
         url = reverse('project-update', args=[9999])
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.admin_user))
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
 
     def test_create_project_without_name(self):
         url = reverse('project-create')
@@ -251,7 +237,6 @@ class ProjectTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.admin_user))
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_create_project_with_existing_name(self):
         url = reverse('project-create')
@@ -265,7 +250,6 @@ class ProjectTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-
     def test_user_can_view_own_projects(self):
         url = reverse('project-user-view')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.get_token(self.users[0]))
@@ -273,4 +257,3 @@ class ProjectTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         project_names = [project['project_name'] for project in response.data]
         self.assertIn('Project_1', project_names)
-
