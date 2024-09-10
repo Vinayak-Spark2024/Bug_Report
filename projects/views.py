@@ -1,6 +1,7 @@
 # accounts/views.py
 
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import PermissionDenied
 
@@ -41,5 +42,14 @@ class ProjectUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAdminUser]
+
+    def update(self, request, *args, **kwargs):
+        project = self.get_object()
+        serializer = self.get_serializer(project, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     

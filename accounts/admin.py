@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.hashers import make_password
 
 from accounts.models import Department, Role
 
-class CustomUserAdmin(BaseUserAdmin):
+class CustomUserAdmin(UserAdmin):
+
+    list_display = ('username', 'email', 'department', 'role', 'is_staff')
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': ('department', 'role', 'profile_pic')}),
+    )
     # Ensure the password is hashed when saving through the admin panel
     def save_model(self, request, obj, form, change):
         if change:  # If updating an existing user

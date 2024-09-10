@@ -1,4 +1,7 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+
 
 from bug.models import Bug
 from bug.serializers import BugSerializer
@@ -17,48 +20,58 @@ class BugListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        status = self.kwargs.get('status', None)
+        status_filter = self.kwargs.get('status', None)
         queryset = Bug.objects.all()
-        
-        if status == 'open':
-            queryset = queryset.filter(status='open')
-        elif status == 'closed':
-            queryset = queryset.filter(status='closed')
-        elif status == 'in_progress':
-            queryset = queryset.filter(status='in_progress')
-        
-        return queryset
 
+        if status_filter == 'open':
+            queryset = queryset.filter(status='open')
+        elif status_filter == 'closed':
+            queryset = queryset.filter(status='closed')
+        elif status_filter == 'in_progress':
+            queryset = queryset.filter(status='in_progress')
+
+        return queryset
 
 class UserBugsListView(generics.ListAPIView):
     serializer_class = BugSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        status = self.kwargs.get('status', None)
+        status_filter = self.kwargs.get('status', None)
         queryset = Bug.objects.filter(assigned_to=self.request.user)
-        
-        if status == 'open':
+
+        if status_filter == 'open':
             queryset = queryset.filter(status='open')
-        elif status == 'closed':
+        elif status_filter == 'closed':
             queryset = queryset.filter(status='closed')
-        elif status == 'in_progress':
+        elif status_filter == 'in_progress':
             queryset = queryset.filter(status='in_progress')
-        
+
         return queryset
-        
 
 class AdminBugUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Bug.objects.all()
     serializer_class = BugSerializer
     permission_classes = [permissions.IsAdminUser]
 
+    
 class BugUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Bug.objects.all()
     serializer_class = BugSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Bug.objects.filter(assigned_to=self.request.user)
-    
+    def get_object(self):
+        # Retrieve the bug object
+        bug = super().get_object()
+
+        # Check if the current user is assigned to the bug
+        if bug.assigned_to != self.request.user:
+            # Return a 403 Forbidden response if the user is not assigned to the bug
+            raise PermissionDenied(detail="You do not have permission to update this bug.")
+
+        return bug
+
+    def update(self, request, *args, **kwargs):
+        # Get the bug and perform the permission check in get_object()
+        return super().update(request, *args, **kwargs)
 

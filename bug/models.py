@@ -36,8 +36,6 @@ class Bug(models.Model):
         ('medium', 'Medium'),
         ('high', 'High')
     ]
-
-    bug_id = models.AutoField(primary_key=True)
     bug_type = models.CharField(max_length=20, choices=BUG_TYPE_CHOICES)
     created_by = models.ForeignKey(User, related_name='created_bugs', on_delete=models.CASCADE)
     assigned_to = models.ForeignKey(User, related_name='assigned_bugs', on_delete=models.SET_NULL, null=True, blank=True)
@@ -53,4 +51,4 @@ class Bug(models.Model):
     is_current_project = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.bug_id} - {self.bug_type} -{self.status}"
+        return f"{self.id} - {self.bug_type} - {self.status}"
