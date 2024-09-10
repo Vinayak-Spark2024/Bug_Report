@@ -242,4 +242,3 @@ class AccountsTests(APITestCase):
         url = reverse('user-profile')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    

@@ -20,16 +20,16 @@ class BugListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        status = self.kwargs.get('status', None)
+        status_filter = self.kwargs.get('status', None)
         queryset = Bug.objects.all()
-        
-        if status == 'open':
+
+        if status_filter == 'open':
             queryset = queryset.filter(status='open')
-        elif status == 'closed':
+        elif status_filter == 'closed':
             queryset = queryset.filter(status='closed')
-        else:
+        elif status_filter == 'in_progress':
             queryset = queryset.filter(status='in_progress')
-        
+
         return queryset
 
 class UserBugsListView(generics.ListAPIView):
@@ -37,16 +37,16 @@ class UserBugsListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        status = self.kwargs.get('status', None)
+        status_filter = self.kwargs.get('status', None)
         queryset = Bug.objects.filter(assigned_to=self.request.user)
-        
-        if status == 'open':
+
+        if status_filter == 'open':
             queryset = queryset.filter(status='open')
-        elif status == 'closed':
+        elif status_filter == 'closed':
             queryset = queryset.filter(status='closed')
-        else:
+        elif status_filter == 'in_progress':
             queryset = queryset.filter(status='in_progress')
-        
+
         return queryset
 
 class AdminBugUpdateView(generics.RetrieveUpdateAPIView):
@@ -54,21 +54,24 @@ class AdminBugUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = BugSerializer
     permission_classes = [permissions.IsAdminUser]
 
-
+    
 class BugUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Bug.objects.all()
     serializer_class = BugSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Bug.objects.filter(assigned_to=self.request.user)
+    def get_object(self):
+        # Retrieve the bug object
+        bug = super().get_object()
+
+        # Check if the current user is assigned to the bug
+        if bug.assigned_to != self.request.user:
+            # Return a 403 Forbidden response if the user is not assigned to the bug
+            raise PermissionDenied(detail="You do not have permission to update this bug.")
+
+        return bug
+
     def update(self, request, *args, **kwargs):
-        bug = self.get_object()
-        if bug.assigned_to != request.user:
-            unauthorized_bug_data = {
-                'detail': 'You do not have permissions to perform this task.',
-                'bug_id': bug.id,
-                'assigned_to': bug.assigned_to.username,
-            }
-            return Response(unauthorized_bug_data, status=status.HTTP_403_FORBIDDEN)
+        # Get the bug and perform the permission check in get_object()
         return super().update(request, *args, **kwargs)
+
