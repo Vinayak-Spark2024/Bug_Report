@@ -61,17 +61,12 @@ class BugUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # Retrieve the bug object
         bug = super().get_object()
-
-        # Check if the current user is assigned to the bug
         if bug.assigned_to != self.request.user:
-            # Return a 403 Forbidden response if the user is not assigned to the bug
             raise PermissionDenied(detail="You do not have permission to update this bug.")
-
         return bug
 
     def update(self, request, *args, **kwargs):
-        # Get the bug and perform the permission check in get_object()
+        # Ensure project is included in validated_data during the update
         return super().update(request, *args, **kwargs)
 
